@@ -1,3 +1,6 @@
+const user = require('../models/user');
+const User=require('../models/user')
+
 const users = [
     {id: 1, name: 'hila'},
     {id: 2,name:'shogi'},
@@ -5,26 +8,21 @@ const users = [
     {id: 4, name: 'katani'}
 ];
 
-const getUsers= (req, res)=>
-{
-    return res.json(users);
-}
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password')
+        return res.json(users);
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
 
 const addUser=(req,res)=> {
-    const { name } = req.body;
-    if (!name) {
-        return res.status(400).json({ error: 'name is required' });
-    }
-    const nameExists = users.find((user) => user.name === name);
-    if (nameExists) {
-        return res.status(400).json({ error: 'name already exists' });
-    }
-    const user1 = {
-        id: users.length + 1,
-        name,
-    };
-    users.push(user1);
-    return res.status(201).json(users);
+    const {name, email, password}= req.body;
+
+    const newUser=new User({name, email, password})
+    newUser.save()
+    return res.status(201).json(newUser)
 }
 
 const deleteUser=(req,res)=>{
