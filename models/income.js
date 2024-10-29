@@ -1,4 +1,4 @@
-
+const mongoose = require('mongoose');
 
 const incomeSchema = new mongoose.Schema(
     {
@@ -30,6 +30,6 @@ const incomeSchema = new mongoose.Schema(
             enum: ['ILS', 'USD', 'EUR'],
         },
     },
-    {timestamps: true}
+    { timestamps: true }
 );
-module.exports= mongoose.model('Income', incomeSchema)
+module.exports = mongoose.model('Income', incomeSchema)
