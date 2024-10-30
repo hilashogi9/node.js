@@ -10,6 +10,7 @@ const signUp = async (req, res) => {
         const { fullName, username, email, password } = signUpSchema.parse(req.body);
 
         // Check if the username already exists in the database
+        /////////////////////
         // Difference between findOne and find:
         // - findOne: 
         //   - Purpose: Used to retrieve a single document that matches the query criteria.
@@ -23,7 +24,15 @@ const signUp = async (req, res) => {
         // 
         // In this code, findOne is used to check if a user with the specified username already exists.
         //Since username is typically a unique identifier, using findOne is efficient and straightforward, allowing for quick existence checks without retrieving an unnecessary array of users.
+        ////////////////////////
+        // usernameExists will hold the user object returned by findOne.
+        // If a user with the specified username exists, usernameExists is truthy (the user object).
+        // If no user is found, usernameExists is null (falsy).
+        // The condition if (usernameExists) checks for the existence of the user.
+        // If it evaluates to true, it means the username already exists, and a 400 error is returned.
 
+        //find פונקציה של מערכים
+        //findone פונקציה של מונגוס
         const usernameExists = await User.findOne({ username });
         if (usernameExists) {
             return res.status(400).json({ message: 'Username already exists' });
@@ -35,7 +44,8 @@ const signUp = async (req, res) => {
             return res.status(400).json({ message: 'Email already exists' });
         }
 
-        // Hash the user's password for secure storage
+        // Hash the user's password using bcrypt with 10 salt rounds for security.
+        // The hashed password is stored in hashPassword.
         const hashPassword = await bcrypt.hash(password, 10);
 
         // Create a new user object with the validated data
@@ -49,7 +59,11 @@ const signUp = async (req, res) => {
         // Save the new user to the database
         const newUser = await user.save();
 
-        // Create a JWT token for the new user
+        // A token is a digital unit of information used for authentication and access to resources. 
+        // It contains data that allows the server to identify users and track user sessions.
+
+        // This code generates a JWT (JSON Web Token) for the newly created user, including their ID and username.
+        // The token is signed using a secret key from the environment variables and is set to expire in 1 hour.
         const token = jwt.sign(
             {
                 id: newUser._id, // Include the user's ID in the token payload
@@ -60,6 +74,7 @@ const signUp = async (req, res) => {
                 expiresIn: '1h', // Set the token to expire in 1 hour
             }
         );
+
 
         // Set the token as an HTTP-only cookie
         res.cookie('token', token, {

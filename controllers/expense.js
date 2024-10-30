@@ -1,17 +1,17 @@
 // Import necessary validation schema and models
-const { incomeSchema } = require('../lib/validation/income'); // Schema for validating income data
+const { expenseSchema } = require('../lib/validation/expense'); // Schema for validating expense data
 const User = require('../models/user'); // User model for database interaction
-const Income = require('../models/income'); // Income model for database interaction
+const Expense = require('../models/expense'); // expense model for database interaction
 const { z } = require("zod"); // Zod library for schema validation
 const { userIdValidation } = require('../lib/validation/user'); // Schema for validating user ID
 
-// Function to add income entry for a user
-const addIncome = async (req, res) => {
+// Function to add expense entry for a user
+const addExpense = async (req, res) => {
     try {
         //validating userId using userIdValidation from /lib/validation/user to check if the correct conditions are met according to the function
         const userId = userIdValidation.parse(req.params.userId);
-        //Checking that the data received from the entity matches the schema(with parse and incomeSchema) and if so, save the data in the variables defined respectively
-        const { title, description, amount, tag, currency } = incomeSchema.parse(req.body);
+        //Checking that the data received from the entity matches the schema(with parse and expenseSchema) and if so, save the data in the variables defined respectively
+        const { title, description, amount, tag, currency } = expenseSchema.parse(req.body);
 
         // Check if the user exists in the database
         const userExists = await User.findById(userId);
@@ -20,8 +20,8 @@ const addIncome = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Create a new income entry with the parsed data
-        const income = new Income({
+        // Create a new expense entry with the parsed data
+        const expense = new Expense({
             title,
             description,
             amount,
@@ -29,15 +29,15 @@ const addIncome = async (req, res) => {
             currency
         });
 
-        // Save the new income entry to the database
-        await income.save();
+        // Save the new expense entry to the database
+        await expense.save();
 
-        // Link the income entry to the user and save the user data
-        userExists.incomes.push(income);
+        // Link the expense entry to the user and save the user data
+        userExists.expenses.push(expense);
         await userExists.save();
 
         // Respond with success message
-        return res.status(201).json({ message: 'Income added successfully' });
+        return res.status(201).json({ message: 'expense added successfully' });
 
     } catch (error) {
         console.log(error);
@@ -51,8 +51,8 @@ const addIncome = async (req, res) => {
     }
 };
 
-// Function to get all income entries for a specific user
-const getIncomes = async (req, res) => {
+// Function to get all expense entries for a specific user
+const getExpenses = async (req, res) => {
     try {
         // Parse and validate user ID from request parameters
         const userId = userIdValidation.parse(req.params.userId);
@@ -64,22 +64,22 @@ const getIncomes = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // This line fetches all income records for the user.
-        // It uses the Income model to find documents where the income ID (_id)
-        // matches any ID in the user's income list (userExists.incomes).
+        // This line fetches all expense records for the user.
+        // It uses the expense model to find documents where the expense ID (_id)
+        // matches any ID in the user's expense list (userExists.expenses).
         //
-        // The { $in: userExists.incomes } part checks if the income ID
-        // is included in the user's income IDs. This means we get
-        // all the incomes that belong to the user.
+        // The { $in: userExists.expenses } part checks if the expense ID
+        // is included in the user's expense IDs. This means we get
+        // all the expenses that belong to the user.
         //
-        // For example, if userExists.incomes contains ['incomeId1', 'incomeId2'],
-        // this line will find and return all income records with IDs 
-        // 'incomeId1' or 'incomeId2'. This way, we can retrieve all 
-        // the incomes associated with that user.
-        const incomes = await Income.find({ _id: { $in: userExists.incomes } });
+        // For example, if userExists.expenses contains ['expenseId1', 'expenseId2'],
+        // this line will find and return all expense records with IDs 
+        // 'expenseId1' or 'expenseId2'. This way, we can retrieve all 
+        // the expenses associated with that user.
+        const expenses = await Expense.find({ _id: { $in: userExists.expenses } });
 
-        // Respond with the income data as a JSON array
-        return res.status(200).json(incomes);
+        // Respond with the expense data as a JSON array
+        return res.status(200).json(expenses);
 
     } catch (error) {
         console.log(error);
@@ -92,29 +92,29 @@ const getIncomes = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 }
-
-const deleteIncome = async (req, res) => {
+const deleteExpense = async (req, res) => {
     try {
         const userId = userIdValidation.parse(req.params.userId)
-        const incomeId = (req.params.incomeId)
+        const expenseId = (req.params.expenseId)
         // Check if the user exists in the database
         const userExists = await User.findById(userId);
         if (!userExists) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // Check if the income exists in the database
-        const incomeExists = userExists.incomes.find(id => id.toString() === incomeId);
-        if (!incomeExists) {
-            return res.status(404).json({ message: 'income not found' });
+        // Check if the expense exists in the database
+        const expenseExists = userExists.expenses.find(id => id.toString() === expenseId);
+        if (!expenseExists) {
+            return res.status(404).json({ message: 'expense not found' });
         }
 
-        // Remove the incomeId from the user's incomes array
-        userExists.incomes = userExists.incomes.filter(id => id.toString() !== incomeId);
+        // Remove the expenseId from the user's expenses array
+        //בעזרת פילטר אפשר ליצור מערך חדש על פי תנאי מסוים במקרה זה התנאי הוא שהמערך יכיל כל הוצאה שהאיידי שלה שונה מהאיידי הנתון
+        userExists.expenses = userExists.expenses.filter(id => id.toString() !== expenseId);
         // Save the updated user object
         await userExists.save();
 
         // Respond with success message
-        return res.status(200).json({ message: 'Income deleted successfully' });
+        return res.status(200).json({ message: 'expense deleted successfully' });
 
     } catch (error) {
         console.log(error);
@@ -125,34 +125,33 @@ const deleteIncome = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
-
-const updateIncome = async (req, res) => {
+const updateExpense = async (req, res) => {
     try {
         const userId = userIdValidation.parse(req.params.userId)
-        const incomeId = (req.params.incomeId)
-        const { title, description, amount, tag, currency } = incomeSchema.parse(req.body);
+        const expenseId = (req.params.expenseId)
+        const { title, description, amount, tag, currency } = expenseSchema.parse(req.body);
         // Check if the user exists in the database
         const userExists = await User.findById(userId);
         if (!userExists) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // Check if the income exists in the database
-        const incomeExists = userExists.incomes.find(id => id.toString() === incomeId);
-        if (!incomeExists) {
-            return res.status(404).json({ message: 'income not found' });
+        // Check if the expense exists in the database
+        const expenseExists = userExists.expenses.find(id => id.toString() === expenseId);
+        if (!expenseExists) {
+            return res.status(404).json({ message: 'expense not found' });
         }
-        console.log(incomeExists)
-        const updatedIncome = await Income.findByIdAndUpdate(incomeId, {
+        console.log(expenseExists)
+        const updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
             title,
             description,
             amount,
             tag,
             currency
-        }, { new: true });
-        console.log(updatedIncome)
+        }, { new: true }); //להחזיר את ההוצאה המעודכנת ולא המקורית
+        console.log(updatedExpense)
 
         // Respond with success message
-        return res.status(200).json({ message: 'Income updated successfully' });
+        return res.status(200).json({ message: 'Expense updated successfully' });
 
     } catch (error) {
         console.log(error);
@@ -166,4 +165,4 @@ const updateIncome = async (req, res) => {
 
 
 // Export the functions for use in other parts of the application
-module.exports = { addIncome, getIncomes, deleteIncome, updateIncome };
+module.exports = { addExpense, getExpenses, deleteExpense, updateExpense };
